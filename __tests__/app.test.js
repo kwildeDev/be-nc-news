@@ -3,6 +3,7 @@ const seed = require("../db/seeds/seed")
 const db = require("../db/connection")
 const request = require("supertest")
 const app = require("../app")
+const endpoints = require("../endpoints.json")
 
 beforeAll(() => seed(data));
 
@@ -30,6 +31,16 @@ describe("/api/topics", () => {
                 expect(typeof topic.description).toBe("string");
                 expect(typeof topic.slug).toBe("string")
             });
+        });
+    });
+});
+describe("GET /api", () => {
+    it("200 - responds with status 200 and returns an object detailing all available API endpoints", () => {
+        return request(app)
+        .get("/api")
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.endpoints).toEqual(endpoints);
         });
     });
 });
