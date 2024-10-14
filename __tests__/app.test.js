@@ -27,10 +27,12 @@ describe("/api/topics", () => {
         .get("/api/topics")
         .expect(200)
         .then(({ body }) => {
-            body.topics.forEach(topic => {
-                expect(typeof topic.description).toBe("string");
-                expect(typeof topic.slug).toBe("string")
-            });
+            if (body.topics.length > 0) {
+                body.topics.forEach(topic => {
+                    expect(typeof topic.description).toBe("string");
+                    expect(typeof topic.slug).toBe("string")
+                });
+            }
         });
     });
 });
