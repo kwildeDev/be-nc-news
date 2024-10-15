@@ -1,7 +1,5 @@
 const { request, response } = require("express")
-const app = require("../app");
 const { fetchArticleById, fetchArticles } = require("../models/articles.models");
-const articles = require("../db/data/test-data/articles");
 
 exports.getArticleById = (request, response, next) => {
     const { article_id } = request.params;
