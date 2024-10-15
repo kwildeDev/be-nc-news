@@ -111,3 +111,52 @@ describe("/api/articles", () => {
         });
     });
 })
+
+describe("/api/articles/:article_id/comments", () => {
+    it("GET 200: returns an array of comments for the given article_id when given a valid and present article_id", () => {
+        return request(app)
+        .get("/api/articles/1/comments")
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.comments).toHaveLength(11)
+            body.comments.forEach(comment => {
+                expect(comment).toHaveProperty("comment_id", "votes", "created_at", "author", "body")
+                expect(comment.article_id).toBe(1)
+                expect(typeof comment.comment_id).toBe("number")
+            });
+        });
+    });
+    it("GET 200: responds with an empty array when given an article_id which is present in the database but has no associated comments", () => {
+        return request(app)
+        .get("/api/articles/12/comments")
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.comments).toHaveLength(0)
+            expect(Array.isArray(body.comments)).toBe(true)
+        });
+    });
+    it("GET 200: returned array should be sorted by date in descending order", () => {
+        return request(app)
+        .get("/api/articles/1/comments")
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.comments).toBeSortedBy("created_at", { descending: true, })
+        });
+    });
+    it("GET 400: responds with an error message when given an invalid article_id", () => {
+        return request(app)
+        .get("/api/articles/not-an-article/comments")
+        .expect(400)
+        .then(({ body }) => {
+            expect(body.msg).toBe("Bad Request")
+        });
+    });
+    it("GET 404: responds with an error message when given a valid but non-existent article_id", () => {
+        return request(app)
+        .get("/api/articles/99999/comments")
+        .expect(404)
+        .then(({ body }) => {
+            expect(body.msg).toBe("Article Does Not Exist")
+        });
+    });
+})
