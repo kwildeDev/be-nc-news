@@ -10,7 +10,7 @@ beforeAll(() => seed(data));
 afterAll(() => db.end());
 
 describe("Express Server", () => {
-    it("404 - responds with status 404 when given an invalid endpoint", () => {
+    it("GET 404: responds with an error message when given an invalid endpoint", () => {
         return request(app)
         .get("/api/news")
         .expect(404)
@@ -22,22 +22,22 @@ describe("Express Server", () => {
 });
 
 describe("/api/topics", () => {
-    it("200 - responds with status 200 and returns an array of all topics", () => {
+    it("GET 200: returns an array of all available topics", () => {
         return request(app)
         .get("/api/topics")
         .expect(200)
         .then(({ body }) => {
-            if (body.topics.length > 0) {
-                body.topics.forEach(topic => {
-                    expect(typeof topic.description).toBe("string");
-                    expect(typeof topic.slug).toBe("string")
-                });
-            }
+            expect(body.topics.length).toBe(3)
+            body.topics.forEach(topic => {
+                expect(typeof topic.description).toBe("string");
+                expect(typeof topic.slug).toBe("string")
+            });
         });
     });
 });
-describe("GET /api", () => {
-    it("200 - responds with status 200 and returns an object detailing all available API endpoints", () => {
+
+describe("/api", () => {
+    it("GET 200: returns an object detailing all available API endpoints", () => {
         return request(app)
         .get("/api")
         .expect(200)
@@ -47,4 +47,37 @@ describe("GET /api", () => {
     });
 });
 
-
+describe("/api/articles/:article_id", () => {
+    it("GET 200: returns a single article object when given a valid and existing article id", () => {
+        return request(app)
+        .get("/api/articles/5")
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.article.article_id).toBe(5) 
+            expect(typeof body.article.article_id).toBe("number")
+            expect(typeof body.article.author).toBe("string")
+            expect(typeof body.article.title).toBe("string")
+            expect(typeof body.article.body).toBe("string")
+            expect(typeof body.article.topic).toBe("string")
+            expect(typeof body.article.created_at).toBe("string")
+            expect(typeof body.article.votes).toBe("number")
+            expect(typeof body.article.article_img_url).toBe("string")
+        });
+    });
+    it("GET 404: responds with an error message when given a valid but non-existent article_id", () => {
+        return request(app)
+        .get("/api/articles/99999")
+        .expect(404)
+        .then((response) => {
+            expect(response.body.msg).toBe("Article Does Not Exist");
+        });
+    });
+    it("GET 400: responds with an error message when given an invalid article_id", () => {
+        return request(app)
+        .get("/api/articles/five")
+        .expect(400)
+        .then((response) => {
+            expect(response.body.msg).toBe("Bad Request")
+        });
+    });
+});
