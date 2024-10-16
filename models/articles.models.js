@@ -33,3 +33,15 @@ exports.fetchArticles = () => {
         return rows
     })
 }
+
+exports.updateArticle = (article_id, currentVotes, inc_votes) => {
+    if (isNaN(inc_votes)) {
+        return Promise.reject({ status: 400, msg: "Bad Request" })
+    }
+    const updatedVotes = currentVotes += inc_votes
+    return db
+    .query(`UPDATE articles SET votes = $1 WHERE article_id = $2 RETURNING *;`, [updatedVotes, article_id])
+    .then((result) => {
+        return result.rows[0]
+    });
+}
