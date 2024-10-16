@@ -68,19 +68,80 @@ describe("/api/articles/:article_id", () => {
         return request(app)
         .get("/api/articles/99999")
         .expect(404)
-        .then((response) => {
-            expect(response.body.msg).toBe("Article Does Not Exist");
+        .then(({ body }) => {
+            expect(body.msg).toBe("Article Does Not Exist");
         });
     });
     it("GET 400: responds with an error message when given an invalid article_id", () => {
         return request(app)
         .get("/api/articles/five")
         .expect(400)
-        .then((response) => {
-            expect(response.body.msg).toBe("Bad Request")
+        .then(({ body }) => {
+            expect(body.msg).toBe("Bad Request")
         });
     });
-});
+    it("PATCH 200: returns an existing single article object with the votes property correctly incremented by the given number", () => {
+        const originalArticle = {
+            "article_id": 5,
+            "title": "UNCOVERED: catspiracy to bring down democracy",
+            "topic": "cats",
+            "author": "rogersop",
+            "body": "Bastet walks amongst us, and the cats are taking arms!",
+            "created_at": "2020-08-03T13:14:00.000Z",
+            "article_img_url": "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700",
+            }
+        const input = { inc_votes: -10 }
+        return request(app)
+        .patch("/api/articles/5")
+        .send(input)
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.article).toMatchObject(originalArticle)
+            expect(body.article.votes).not.toBe(0)
+            expect(body.article.votes).toBe(input.inc_votes)
+        })
+    });
+    it("PATCH 400: responds with an error message if trying to update an invalid article_id", () => {
+        const input = { inc_votes: 5 }
+        return request(app)
+        .patch("/api/articles/five")
+        .send(input)
+        .expect(400)
+        .then(({ body }) => {
+            expect(body.msg).toBe("Bad Request")
+        })
+    });
+    it("PATCH 404: responds with an error message if trying to update a valid but non-existent article_id", () => {
+        const input = { inc_votes: -1}
+        return request(app)
+        .patch("/api/articles/99999")
+        .send(input)
+        .expect(404)
+        .then(({ body }) => {
+            expect(body.msg).toBe("Article Does Not Exist");
+        });
+    });
+    it("PATCH 400: responds with an error message on an attempt to update the votes with an incorrect data type", () => {
+        const input = { inc_votes: "some votes" }
+        return request(app)
+        .patch("/api/articles/4")
+        .send(input)
+        .expect(400)
+        .then(({ body }) => {
+            expect(body.msg).toBe("Bad Request")
+        });
+    });
+    it("PATCH 400: responds with an error message if the votes increment number is missing", () => {
+        const input = {}
+        return request(app)
+        .patch("/api/articles/5")
+        .send(input)
+        .expect(400)
+        .then(({ body }) => {
+            expect(body.msg).toBe("Bad Request")
+        });
+    });
+})
 
 describe("/api/articles", () => {
     it("GET 200: returns an array of all available articles in the correct format", () => {
