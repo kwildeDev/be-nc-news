@@ -113,14 +113,19 @@ describe("/api/articles", () => {
 })
 
 describe("/api/articles/:article_id/comments", () => {
+describe("GET requests", () => {
     it("GET 200: returns an array of comments for the given article_id when given a valid and present article_id", () => {
-        return request(app)
-        .get("/api/articles/1/comments")
-        .expect(200)
-        .then(({ body }) => {
+            return request(app)
+            .get("/api/articles/1/comments")
+            .expect(200)
+            .then(({ body }) => {
             expect(body.comments).toHaveLength(11)
             body.comments.forEach(comment => {
-                expect(comment).toHaveProperty("comment_id", "votes", "created_at", "author", "body")
+                expect(comment).toHaveProperty("comment_id", expect.any(Number))
+                expect(comment).toHaveProperty("votes", expect.any(Number))
+                expect(comment).toHaveProperty("created_at", expect.any(String))
+                expect(comment).toHaveProperty("author", expect.any(String))
+                expect(comment).toHaveProperty("body", expect.any(String))
                 expect(comment.article_id).toBe(1)
                 expect(typeof comment.comment_id).toBe("number")
             });
@@ -160,3 +165,118 @@ describe("/api/articles/:article_id/comments", () => {
         });
     });
 })
+describe("POST requests", () => {
+    it("POST 201: inserts a new comment to the article and sends it back to the client", () => {
+        const input = {
+            author: "butter_bridge",
+            body: "This is literally the funniest story I've heard all year!!!"
+        };
+        const expectedComment = {
+            comment_id: 19,
+            body: "This is literally the funniest story I've heard all year!!!",
+            article_id: 1,
+            author: "butter_bridge",
+            votes: 0
+        }
+        return request(app)
+        .post("/api/articles/1/comments")
+        .send(input)
+        .expect(201)
+        .then(({ body }) => {
+            expect(body.comment).toMatchObject(expectedComment)
+            expect(body.comment).toMatchObject({
+                created_at: expect.any(String)
+            })
+        });
+    });
+    it("POST 201: ignores unnecessary properties", () => {
+        const input = {
+            author: "rogersop",
+            body: "Life is beautiful lol",
+            favColour: "purple"
+        };
+        const expectedComment = {
+            comment_id: 20,
+            body: input.body,
+            article_id: 3,
+            author: input.author,
+            votes: 0
+        }
+        return request(app)
+        .post("/api/articles/3/comments")
+        .send(input)
+        .expect(201)
+        .then(({ body }) => {
+            expect(body.comment).toMatchObject(expectedComment)
+            expect(body.comment).toMatchObject({
+                created_at: expect.any(String)
+            })
+            expect(body.comment).not.toHaveProperty("favColour")
+        });
+    })
+    it("POST 400: responds with an error message on an attempt to post to an invalid article_id", () => {
+        const input = {
+            author: "rogersop",
+            body: "idk i've never been blocked",
+        };
+        return request(app)
+        .post("/api/articles/not-an-article/comments")
+        .send(input)
+        .expect(400)
+        .then(({ body }) => {
+            expect(body.msg).toBe("Bad Request")
+        });
+    });
+    it("POST 404: responds with an error message on an attempt to post to a valid but non-existent article_id", () => {
+        const input = {
+            author: "butter_bridge",
+            body: "Hello world, welcome to the universe.",
+        };
+        return request(app)
+        .post("/api/articles/999/comments")
+        .send(input)
+        .expect(404)
+        .then(({ body }) => {
+            expect(body.msg).toBe("Article Does Not Exist")
+        });
+    });
+    it("POST 400: responds with an error message if the body field is missing", () => {
+        const input = {
+            author: "rogersop",
+        };
+        return request(app)
+        .post("/api/articles/1/comments")
+        .send(input)
+        .expect(400)
+        .then(({ body }) => {
+            expect(body.msg).toBe("Bad Request")
+        });
+    })
+    it("POST 400: responds with an error message if the author field is missing", () => {
+        const input = {
+            body: "there is no user here",
+        };
+        return request(app)
+        .post("/api/articles/3/comments")
+        .send(input)
+        .expect(400)
+        .then(({ body }) => {
+            expect(body.msg).toBe("Bad Request")
+        });
+    })
+    it("POST 400: responds with an error message if the user does not exist", () => {
+        const input = {
+            author: "peanut_butter",
+            body: "spread it on toast",
+        };
+        return request(app)
+        .post("/api/articles/3/comments")
+        .send(input)
+        .expect(404)
+        .then(({ body }) => {
+            expect(body.msg).toBe("User Does Not Exist")
+        });
+    })
+})
+})
+

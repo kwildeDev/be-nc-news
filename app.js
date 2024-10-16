@@ -1,10 +1,12 @@
 const express = require("express");
 const { getTopics } = require("./controllers/topics.controller");
 const { getArticleById, getArticles } = require("./controllers/articles.controller");
-const { getCommentsByArticleId } = require("./controllers/comments.controller");
+const { getCommentsByArticleId, postComment } = require("./controllers/comments.controller");
 const endpoints = require("./endpoints.json");
 
 const app = express();
+
+app.use(express.json());
 
 app.get("/api/topics", getTopics);
 
@@ -18,6 +20,7 @@ app.get("/api/articles", getArticles);
 
 app.get("/api/articles/:article_id/comments", getCommentsByArticleId);
 
+app.post("/api/articles/:article_id/comments", postComment);
 
 // Error Handling
 
@@ -28,9 +31,25 @@ app.all("*", (request, response, next) => {
 // PSQL Error Handling
 
 app.use((err, request, response, next) => {
-    if (err.code === '22P02') {
-        response.status(400).send({msg: "Bad Request"});
-    }
+    switch(err.code) {
+        case '22P02' :
+        case '23502' :
+            response.status(400).send({msg: "Bad Request"});
+            break;
+        case '23503' :
+            const columnName = err.constraint.split("_")[1]
+            let message = "Not found"
+            if (columnName === "author") {
+                message = "User Does Not Exist"
+            }
+            if (columnName === "article") {
+                message = "Article Does Not Exist"
+            }
+            response.status(404).send({msg: message});
+            break;
+        default :
+            break;
+        }
     next(err)
 });
 
