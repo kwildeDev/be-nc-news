@@ -13,7 +13,11 @@ exports.getArticleById = (request, response, next) => {
 }
 
 exports.getArticles = (request, response, next) => {
-    fetchArticles()
+    const queryKeys = Object.keys(request.query)
+    const invalidKeys = queryKeys.filter((key) => key !== 'sort_by' && key !== 'order')
+    const sort_by = invalidKeys.length ? "invalid_query" : request.query.sort_by
+    const order  = request.query.order;
+    fetchArticles(sort_by, order)
     .then((articles) => {
         response.status(200).send({articles})
     })
