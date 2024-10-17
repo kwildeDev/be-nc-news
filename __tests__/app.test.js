@@ -99,7 +99,17 @@ describe("/api/articles/:article_id", () => {
             expect(body.article).toMatchObject(originalArticle)
             expect(body.article.votes).not.toBe(0)
             expect(body.article.votes).toBe(input.inc_votes)
-        })
+        });
+    });
+    it("PATCH 200: returns the article object with the votes properly incrememented when adding votes", () => {
+        const input = { inc_votes: 23 }
+        return request(app)
+        .patch("/api/articles/10")
+        .send(input)
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.article.votes).toBe(23)
+        });
     });
     it("PATCH 400: responds with an error message if trying to update an invalid article_id", () => {
         const input = { inc_votes: 5 }
@@ -109,7 +119,7 @@ describe("/api/articles/:article_id", () => {
         .expect(400)
         .then(({ body }) => {
             expect(body.msg).toBe("Bad Request")
-        })
+        });
     });
     it("PATCH 404: responds with an error message if trying to update a valid but non-existent article_id", () => {
         const input = { inc_votes: -1}
@@ -141,6 +151,27 @@ describe("/api/articles/:article_id", () => {
             expect(body.msg).toBe("Bad Request")
         });
     });
+    it("PATCH 400: ignores extra keys on an otherwise valid request", () => {
+        const originalArticle = {
+            "article_id": 4,
+            "title": "Student SUES Mitch!",
+            "topic": "mitch",
+            "author": "rogersop",
+            "body": "We all love Mitch and his wonderful, unique typing style. However, the volume of his typing has ALLEGEDLY burst another students eardrums, and they are now suing for damages",
+            "created_at": "2020-05-06T01:14:00.000Z",
+            "article_img_url": "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700",
+            }
+        const input = { tonights_dinner: "curry", inc_votes: 1 }
+        return request(app)
+        .patch("/api/articles/4")
+        .send(input)
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.article).toMatchObject(originalArticle)
+            expect(body.article.votes).not.toBe(0)
+            expect(body.article.votes).toBe(1)
+        });
+    });
 })
 
 describe("/api/articles", () => {
@@ -163,12 +194,70 @@ describe("/api/articles", () => {
             });
         });
     })
-    it("GET 200: returned array should be sorted by date in descending order", () => {
+    it("GET 200: returned array should be sorted by date in descending order by default", () => {
         return request(app)
         .get("/api/articles")
         .expect(200)
         .then(({ body }) => {
             expect(body.articles).toBeSortedBy("created_at", { descending: true, })
+        });
+    });
+    it("GET 200: takes a sort_by query and responds with articles sorted by the given column name in the default order", () => {
+        return request(app)
+        .get("/api/articles?sort_by=author")
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toBeSortedBy("author", { descending: true })
+        });
+    });
+    
+    it("GET 200: responds with articles sorted in ascending or descending order by the default column", () => {
+        return request(app)
+        .get("/api/articles?order=asc")
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toBeSortedBy("created_at", { descending: false })
+        });
+    });
+    it("GET 200: responds with articles sorted in ascending or descending order by a chosen valid column", () => {
+        return request(app)
+        .get("/api/articles?sort_by=topic&order=asc")
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toBeSortedBy("topic", { descending: false })
+        });
+    });
+    it("GET 200: responds with articles sorted in ascending or descending order sorted by a combined total", () => {
+        return request(app)
+        .get("/api/articles?sort_by=comment_count&order=desc")
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toHaveLength(13)
+            expect(body.articles).toBeSortedBy("comment_count", { descending: true })
+        });
+    });
+    it("GET 400: responds with an error message when given an invalid sort_by query", () => {
+        return request(app)
+        .get("/api/articles?sort_by=cats")
+        .expect(400)
+        .then(({ body }) => {
+            expect(body.msg).toBe("Bad Request");
+        });
+    });
+    it("GET 400: responds with an error message when given an invalid order parameter", () => {
+        return request(app)
+        .get("/api/articles?order=upwards")
+        .expect(400)
+        .then(({ body }) => {
+            expect(body.msg).toBe("Bad Request");
+        });
+    });
+    it("GET 400: responds with an error message when invalid queries are included alongside valid ones", () => {
+        return request(app)
+        .get("/api/articles?sort_by=topic&hello")
+        .expect(400)
+        .then(({ body }) => {
+            expect(body.msg).toBe("Bad Request");
         });
     });
 })
