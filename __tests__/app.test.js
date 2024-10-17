@@ -174,13 +174,13 @@ describe("/api/articles", () => {
 })
 
 describe("/api/articles/:article_id/comments", () => {
-describe("GET requests", () => {
     it("GET 200: returns an array of comments for the given article_id when given a valid and present article_id", () => {
             return request(app)
             .get("/api/articles/1/comments")
             .expect(200)
             .then(({ body }) => {
             expect(body.comments).toHaveLength(11)
+            expect(Array.isArray(body.comments)).toBe(true);
             body.comments.forEach(comment => {
                 expect(comment).toHaveProperty("comment_id", expect.any(Number))
                 expect(comment).toHaveProperty("votes", expect.any(Number))
@@ -225,8 +225,6 @@ describe("GET requests", () => {
             expect(body.msg).toBe("Article Does Not Exist")
         });
     });
-})
-describe("POST requests", () => {
     it("POST 201: inserts a new comment to the article and sends it back to the client", () => {
         const input = {
             author: "butter_bridge",
@@ -339,5 +337,26 @@ describe("POST requests", () => {
         });
     })
 })
-})
 
+describe("/api/comments/:comment_id", () => {
+    it("DELETE 204: deletes the comment specified by comment_id and returns no body", () => {
+        return request(app)
+        .delete("/api/comments/7")
+        .expect(204)
+    });
+    it("DELETE 400: responds with an error message if given an invalid comment_id", () => {
+        return request(app)
+        .delete("/api/comments/not-a-comment")
+        .expect(400)
+        .then(({ body }) => {
+            expect(body.msg).toBe("Bad Request")
+        });
+    });
+    it("DELETE 404: responds with an error message if given a valid but non-existent comment_id", () => {
+        return request(app)
+        .delete("/api/comments/100000")
+        .then(({ body }) => {
+            expect(body.msg).toBe("Comment Does Not Exist")
+        });
+    });
+})

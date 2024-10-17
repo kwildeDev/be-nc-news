@@ -41,15 +41,31 @@
     }
   },
   "GET /api/articles/:article_id/comments": {
-    "description": "serves a list of comments by article id number",
+    "description": "serves an array of all comments by article id number",
     "queries": [],
     "exampleResponse": {
-      "comment_id": 18,
-      "votes": 16,
-      "created_at": "2020-07-21T00:20:00.000Z",
-      "author": "butter_bridge",
-      "body": "This morning, I showered for nine minutes.",
-      "article_id": 1
+      "comments": [
+        {
+          "comment_id": 18,
+          "votes": 16,
+          "created_at": "2020-07-21T00:20:00.000Z",
+          "author": "butter_bridge",
+          "body": "This morning, I showered for nine minutes.",
+          "article_id": 1
+        }
+      ]
+    }
+  },
+  "GET /api/comments/:comment_id" : {
+    "description": "serves a single comment by comment id number",
+    "queries": [],
+    "exampleResponse": {
+        "comment_id": 9,
+        "votes": 0,
+        "created_at": "2020-01-01T03:08:00.000Z",
+        "author": "icellusedkars",
+        "body": "Superficially charming",
+        "article_id": 1
     }
   }
 }
