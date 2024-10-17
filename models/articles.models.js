@@ -11,12 +11,13 @@ exports.fetchArticleById = (article_id) => {
     });
 }
 
-exports.fetchArticles = (sort_by = "created_at", order = "desc") => {
+exports.fetchArticles = (sort_by = "created_at", order = "desc", topic) => {
     const validSortBys = ["author", "title", "topic", "created_at", "votes", "comment_count"];
     const validOrders = ["asc", "desc"]
     if (!validSortBys.includes(sort_by) || (!validOrders.includes(order))) {
         return Promise.reject({ status: 400, msg: "Bad Request"})
     }
+    const topicStr = topic ? `HAVING topic = '${topic}'` : ``
     return db
     .query(`
         SELECT
@@ -31,6 +32,7 @@ exports.fetchArticles = (sort_by = "created_at", order = "desc") => {
             articles.article_id = comments.article_id
         GROUP BY
             articles.article_id
+        ${topicStr}
         ORDER BY
             ${sort_by} ${order};
         `)

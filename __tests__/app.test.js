@@ -236,6 +236,35 @@ describe("/api/articles", () => {
             expect(body.articles).toBeSortedBy("comment_count", { descending: true })
         });
     });
+    it("GET 200: ignores any invalid queries which are included alongside valid ones", () => {
+        return request(app)
+        .get("/api/articles?sort_by=topic&hello&order=asc")
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toHaveLength(13)
+            expect(body.articles).toBeSortedBy("topic");
+        });
+    });
+    it("GET 200: responds with an array of all articles where the given topic is present in the database", () => {
+        return request(app)
+        .get("/api/articles?topic=cats")
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toHaveLength(1)
+            body.articles.forEach(article => {
+                expect(article.topic).toBe("cats")
+            });
+        });
+    });
+    it("GET 200: responds with an empty array when given a topic that is present in the database but has no articles", () => {
+        return request(app)
+        .get("/api/articles?topic=paper")
+        .expect(200)
+        .then(({ body }) => {
+            expect(Array.isArray(body.articles)).toBe(true)
+            expect(body.articles).toHaveLength(0)
+        });
+    });
     it("GET 400: responds with an error message when given an invalid sort_by query", () => {
         return request(app)
         .get("/api/articles?sort_by=cats")
@@ -244,7 +273,7 @@ describe("/api/articles", () => {
             expect(body.msg).toBe("Bad Request");
         });
     });
-    it("GET 400: responds with an error message when given an invalid order parameter", () => {
+    it("GET 400: responds with an error message when given an invalid order query", () => {
         return request(app)
         .get("/api/articles?order=upwards")
         .expect(400)
@@ -252,12 +281,12 @@ describe("/api/articles", () => {
             expect(body.msg).toBe("Bad Request");
         });
     });
-    it("GET 400: responds with an error message when invalid queries are included alongside valid ones", () => {
+    it("GET 404: responds with an error message when given a topic that doesn't exist in the database", () => {
         return request(app)
-        .get("/api/articles?sort_by=topic&hello")
-        .expect(400)
+        .get("/api/articles?topic=milk")
+        .expect(404)
         .then(({ body }) => {
-            expect(body.msg).toBe("Bad Request");
+            expect(body.msg).toBe("Topic Does Not Exist")
         });
     });
 })

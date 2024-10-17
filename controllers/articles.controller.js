@@ -1,5 +1,6 @@
 const { request, response } = require("express")
 const { fetchArticleById, fetchArticles, updateArticle } = require("../models/articles.models");
+const { fetchTopicBySlug } = require("../models/topics.model");
 
 exports.getArticleById = (request, response, next) => {
     const { article_id } = request.params;
@@ -13,12 +14,16 @@ exports.getArticleById = (request, response, next) => {
 }
 
 exports.getArticles = (request, response, next) => {
-    const queryKeys = Object.keys(request.query)
-    const invalidKeys = queryKeys.filter((key) => key !== 'sort_by' && key !== 'order')
-    const sort_by = invalidKeys.length ? "invalid_query" : request.query.sort_by
-    const order  = request.query.order;
-    fetchArticles(sort_by, order)
-    .then((articles) => {
+    const sort_by = request.query.sort_by
+    const order = request.query.order;
+    const topic = request.query.topic;
+    const promises = [fetchArticles(sort_by, order, topic)]
+    if (topic) {
+        promises.push(fetchTopicBySlug(topic))
+    }
+    Promise.all(promises)
+    .then((results) => {
+        const articles = results[0]
         response.status(200).send({articles})
     })
     .catch((err) => {
