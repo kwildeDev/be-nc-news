@@ -1,28 +1,42 @@
 const express = require("express");
 const { getTopics } = require("./controllers/topics.controller");
 const { getArticleById, getArticles, patchArticle } = require("./controllers/articles.controller");
-const { getCommentsByArticleId, postComment } = require("./controllers/comments.controller");
+const { getCommentsByArticleId, postComment, deleteComment } = require("./controllers/comments.controller");
 const endpoints = require("./endpoints.json");
 
 const app = express();
 
 app.use(express.json());
 
-app.get("/api/topics", getTopics);
+// /api
 
 app.get("/api", (request, response) => {
     response.status(200).send({endpoints: endpoints})
 });
 
+// /api/topics
+
+app.get("/api/topics", getTopics);
+
+// /api/articles/:article_id
+
 app.get("/api/articles/:article_id", getArticleById);
 
 app.patch("/api/articles/:article_id", patchArticle);
 
+// /api/articles
+
 app.get("/api/articles", getArticles);
+
+// /api/articles/:article_id/comments
 
 app.get("/api/articles/:article_id/comments", getCommentsByArticleId);
 
 app.post("/api/articles/:article_id/comments", postComment);
+
+// /api/comments/:comment_id
+
+app.delete("/api/comments/:comment_id", deleteComment);
 
 // Error Handling
 
