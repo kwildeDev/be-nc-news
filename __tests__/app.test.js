@@ -53,15 +53,15 @@ describe("/api/articles/:article_id", () => {
         .get("/api/articles/5")
         .expect(200)
         .then(({ body }) => {
-            expect(body.article.article_id).toBe(5) 
-            expect(typeof body.article.article_id).toBe("number")
-            expect(typeof body.article.author).toBe("string")
-            expect(typeof body.article.title).toBe("string")
-            expect(typeof body.article.body).toBe("string")
-            expect(typeof body.article.topic).toBe("string")
-            expect(typeof body.article.created_at).toBe("string")
-            expect(typeof body.article.votes).toBe("number")
-            expect(typeof body.article.article_img_url).toBe("string")
+            expect(body.article.article_id).toBe(5)
+            expect(body.article).toHaveProperty("author", expect.any(String))
+            expect(body.article).toHaveProperty("title", expect.any(String)) 
+            expect(body.article).toHaveProperty("article_id", expect.any(Number))
+            expect(body.article).toHaveProperty("body", expect.any(String))
+            expect(body.article).toHaveProperty("topic", expect.any(String))
+            expect(body.article).toHaveProperty("created_at", expect.any(String))
+            expect(body.article).toHaveProperty("votes", expect.any(Number))
+            expect(body.article).toHaveProperty("article_img_url", expect.any(String))
         });
     });
     it("GET 404: responds with an error message when given a valid but non-existent article_id", () => {
@@ -80,6 +80,24 @@ describe("/api/articles/:article_id", () => {
             expect(body.msg).toBe("Bad Request")
         });
     });
+    it("GET 200: a valid article query response includes the correct comment_count if comments for that article exist", () => {
+        return request(app)
+        .get("/api/articles/1")
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.article).toHaveProperty("comment_count", expect.any(Number))
+            expect(body.article.comment_count).toBe(11)
+        });
+    })
+    it("GET 200: a valid article query response includes a comment_count of zero if no comments exist for that article", () => {
+        return request(app)
+        .get("/api/articles/4")
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.article).toHaveProperty("comment_count", expect.any(Number))
+            expect(body.article.comment_count).toBe(0)
+        });
+    })
     it("PATCH 200: returns an existing single article object with the votes property correctly incremented by the given number", () => {
         const originalArticle = {
             "article_id": 5,
