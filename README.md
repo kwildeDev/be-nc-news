@@ -12,6 +12,7 @@ The application uses [node-postgres](https://node-postgres.com/) to interact wit
 
 The hosted version of this project can be viewed here: https://nc-news-m199.onrender.com. The API endpoint documentation can be found at https://nc-news-m199.onrender.com/api.
 
+---
 
 ## Getting Started
 
